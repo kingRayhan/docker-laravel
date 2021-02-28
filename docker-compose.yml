@@ -1,0 +1,40 @@
+version: "3.8"
+
+networks:
+  laravel:
+    name: "laravel"
+
+services:
+  nginx:
+    build:
+      context: docker/nginx
+    volumes:
+      - ./app:/var/www/html
+    ports:
+      - "80:80"
+    networks:
+      - laravel
+  php:
+    build:
+      context: docker/php
+    container_name: php
+    networks:
+      - laravel
+    volumes:
+      - ./app:/var/www/html
+
+  mysql:
+    image: "mysql:5.7"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=app
+      - MYSQL_USER=app
+      - MYSQL_PASSWORD=app
+    volumes:
+      - ./mysql:/var/lib/mysql
+    networks:
+      - laravel
+    ports:
+      - 3306:3306
+
+      ## BCMath
