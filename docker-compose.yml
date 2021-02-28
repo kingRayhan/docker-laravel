@@ -2,26 +2,46 @@ version: "3.8"
 
 networks:
   laravel:
-    name: "laravel"
+    name: laravel
 
 services:
   nginx:
+    container_name: nginx
     build:
       context: docker/nginx
     volumes:
-      - ./app:/var/www/html
+      - ./api:/var/www/html
     ports:
-      - "80:80"
+      - 80:80
+      - 443:443
     networks:
       - laravel
+    depends_on:
+      - php
   php:
+    container_name: php
     build:
       context: docker/php
-    container_name: php
     networks:
       - laravel
     volumes:
-      - ./app:/var/www/html
+      - ./api:/var/www/html
+    depends_on:
+      - mysql
+      - phpmyadmin
+
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin:latest
+    networks:
+      - laravel
+    environment:
+      - PMA_HOST=mysql
+      - MYSQL_ROOT_PASSWORD=root
+    depends_on:
+      - mysql
+    ports:
+      - 5005:80
 
   mysql:
     image: "mysql:5.7"
@@ -37,4 +57,29 @@ services:
     ports:
       - 3306:3306
 
-      ## BCMath
+  composer:
+    container_name: composer
+    image: composer:2.0.11
+    working_dir: /var/www/html
+    volumes:
+      - ./api:/var/www/html
+
+  npm:
+    container_name: npm
+    image: node:14.16.0-alpine3.12
+    working_dir: /var/www/html
+    volumes:
+      - ./api:/var/www/html
+    entrypoint: npm
+
+  artisan:
+    container_name: artisan
+    build:
+      context: docker/php
+    networks:
+      - laravel
+    volumes:
+      - ./api:/var/www/html
+    depends_on:
+      - mysql
+    entrypoint: "php artisan"
